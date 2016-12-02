@@ -7,17 +7,19 @@ def call(body) {
     body.delegate = config
     body()
 
-    def proceedMessage = """Version ${config.version} has now been deployed to the ${config.environment} environment at:
+    if ( !config.proceedMessage ) {
+      config.proceedMessage = """Version ${config.version} has now been deployed to the ${config.environment} environment at:
 ${config.console}/kubernetes/pods?environment=${config.environment}
 
 Would you like to promote version ${config.version} to the Production namespace?
 """
+    }
 
-    hubotApprove message: proceedMessage, room: config.room
+    hubotApprove message: config.proceedMessage, room: config.room
     def id = approveRequestedEvent(app: "${env.JOB_NAME}", environment: config.environment)
 
     try {
-      input id: 'Proceed', message: "\n${proceedMessage}"
+      input id: 'Proceed', message: "\n${config.proceedMessage}"
     } catch (err) {
       approveReceivedEvent(id: id, approved: false)
       throw err
